@@ -1,3 +1,7 @@
+import subprocess
+import sys
+
+import joblib
 import numpy as np
 import torch
 from sklearn.linear_model import Ridge
@@ -8,6 +12,7 @@ from sklearn.tree import DecisionTreeRegressor
 
 from src.lib import (
     TEST_FOLD,
+    AverageEnsemble,
     build_pipeline,
     evaluate_regression,
     load_split,
@@ -111,3 +116,45 @@ def test_different_seed_changes_results():
     split_b, pred_b = _split_and_tiny_training(SEED + 1)
     assert not split_a.equals(split_b)
     assert not np.array_equal(pred_a, pred_b)
+
+
+def test_average_ensemble_averages_and_does_not_touch_the_originals():
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(200, 3))
+    y = X @ np.array([1.0, -1.0, 2.0]) + rng.normal(0, 0.1, size=200)
+    ridge, tree = Ridge(), DecisionTreeRegressor(max_depth=3, random_state=0)
+
+    ens = AverageEnsemble([ridge, tree]).fit(X, y)
+    expected = (
+        Ridge().fit(X, y).predict(X)
+        + DecisionTreeRegressor(max_depth=3, random_state=0).fit(X, y).predict(X)
+    ) / 2
+    assert np.allclose(ens.predict(X), expected)
+    assert not hasattr(ridge, "coef_")  # fit works on clones, the inputs stay unfitted
+
+
+def test_average_ensemble_round_trips_through_joblib(tmp_path):
+    rng = np.random.default_rng(1)
+    X = rng.normal(size=(100, 3))
+    y = X[:, 0] + rng.normal(0, 0.1, size=100)
+    ens = AverageEnsemble([Ridge(), DecisionTreeRegressor(max_depth=2, random_state=0)]).fit(X, y)
+    joblib.dump(ens, tmp_path / "ens.joblib")
+    assert np.array_equal(joblib.load(tmp_path / "ens.joblib").predict(X), ens.predict(X))
+
+
+def test_early_stopping_lgbm_fits_and_round_trips(tmp_path):
+    # Run in a fresh process: LightGBM and torch (loaded by other tests here) can clash.
+    code = f"""
+import joblib, numpy as np
+from src.lib import EarlyStoppingLGBM
+rng = np.random.default_rng(0)
+X = rng.normal(size=(400, 3)); y = X[:, 0] + rng.normal(0, 0.1, size=400)
+m = EarlyStoppingLGBM({{"n_estimators": 200, "learning_rate": 0.1}}, seed=0).fit(X, y)
+joblib.dump(m, r"{tmp_path / "m.joblib"}")
+assert np.array_equal(joblib.load(r"{tmp_path / "m.joblib"}").predict(X), m.predict(X))
+assert np.sqrt(np.mean((m.predict(X) - y) ** 2)) < 0.5
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=120
+    )
+    assert result.returncode == 0, result.stderr

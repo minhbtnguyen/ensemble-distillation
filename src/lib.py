@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import KFold, train_test_split
 from sklearn.pipeline import Pipeline
@@ -69,3 +70,52 @@ def build_pipeline(model, scale=True):
     if not scale:
         return model
     return Pipeline([("scale", StandardScaler()), ("model", model)])
+
+
+class EarlyStoppingLGBM(BaseEstimator, RegressorMixin):
+    """LightGBM that picks its number of rounds by early stopping on a slice of its own data.
+
+    This is the same procedure the search in src/tune.py used, so tuned parameters carry over.
+    """
+
+    def __init__(self, params=None, seed=42, stop_fraction=0.1, patience=50):
+        self.params = params
+        self.seed = seed
+        self.stop_fraction = stop_fraction
+        self.patience = patience
+
+    def fit(self, X, y):
+        import lightgbm as lgb  # imported here so importing src.lib never loads lightgbm
+
+        X, y = np.asarray(X), np.asarray(y)
+        fit_idx, stop_idx = train_test_split(
+            np.arange(len(y)), test_size=self.stop_fraction, random_state=self.seed
+        )
+        self.model_ = lgb.LGBMRegressor(
+            **(self.params or {}), subsample_freq=1, random_state=self.seed, verbose=-1
+        )
+        self.model_.fit(
+            X[fit_idx],
+            y[fit_idx],
+            eval_X=X[stop_idx],
+            eval_y=y[stop_idx],
+            callbacks=[lgb.early_stopping(self.patience, verbose=False)],
+        )
+        return self
+
+    def predict(self, X):
+        return self.model_.predict(np.asarray(X))
+
+
+class AverageEnsemble(BaseEstimator, RegressorMixin):
+    """Average the predictions of several regressors. Save the whole thing with joblib."""
+
+    def __init__(self, estimators):
+        self.estimators = estimators
+
+    def fit(self, X, y):
+        self.fitted_ = [clone(est).fit(X, y) for est in self.estimators]
+        return self
+
+    def predict(self, X):
+        return np.mean([est.predict(X) for est in self.fitted_], axis=0)

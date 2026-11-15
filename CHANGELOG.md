@@ -20,6 +20,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `src/tune.py` (`python -m src.tune --model lgbm` or `--model mlp`): both searches as a CLI that stops at `n_trials` or the time cap, with `tests/test_tune.py`. Real 20-trial runs wrote `results/trials_{lgbm,mlp}.csv` and `results/best_{lgbm,mlp}.json` (best CV RMSE 0.4492 for LightGBM, 0.5184 for the MLP).
 - `notebooks/lightgbm_vs_mlp.ipynb` now loads the search results: budget curves in `results/fig3_equal_budget.png` and a report in `results/tuning_summary.csv` (best settings refit on the full training portion, test set scored once: LightGBM RMSE 0.441, MLP 0.530, both under 20 trials). Search code moved out of the notebook into `src/tune.py`, with a `fit_predict_lgbm` helper.
 - `notebooks/distillation.ipynb`: expected share of the teacher's gain kept by each student, written before running any distillation.
+- `AverageEnsemble` and `EarlyStoppingLGBM` in `src/lib.py` (with tests, including a joblib round trip), and the teacher in `notebooks/distillation.ipynb`: the average of the tuned LightGBM and a 300-tree random forest. Test RMSE is 0.458, lower than the forest (0.494) but not LightGBM alone (0.441), because their errors are 0.92 correlated.
 
 ### Changed
 - `DESIGN.md` repo skeleton and file paths now match this layout.
