@@ -1,8 +1,10 @@
+import json
 import subprocess
 import sys
 
 import joblib
 import numpy as np
+import pytest
 import torch
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -11,6 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
 
 from src.lib import (
+    ROOT,
     TEST_FOLD,
     AverageEnsemble,
     build_pipeline,
@@ -237,3 +240,46 @@ def test_paired_bootstrap_uses_the_same_draws_and_centers_on_the_full_sample_rms
     assert abs(out["a"].mean() - full_sample) < 0.02
     again = paired_bootstrap_rmse({"a": sq_a}, sq_teacher, n_boot=300, seed=1)
     assert np.array_equal(again["a"], out["a"])  # deterministic for a seed
+
+
+ARTIFACTS = sorted((ROOT / "artifacts").glob("*.joblib"))
+NEEDS_ARTIFACTS = pytest.mark.skipif(
+    not ARTIFACTS, reason="run python -m src.build_artifacts first"
+)
+
+
+@NEEDS_ARTIFACTS
+@pytest.mark.parametrize("path", ARTIFACTS, ids=lambda p: p.stem)
+def test_reloaded_artifact_matches_the_in_memory_model(path, tmp_path):
+    """Training/serving skew check: a fresh process loads the file and predicts 100 saved rows.
+
+    The predictions must be identical to the ones the in-memory model made when it was saved.
+    """
+    rows = path.parent / "check_rows.npy"
+    expected = path.with_name(f"{path.stem}.check_pred.npy")
+    out = tmp_path / "pred.npy"
+    code = (
+        "import joblib, numpy as np; "
+        f"m = joblib.load(r'{path}'); np.save(r'{out}', m.predict(np.load(r'{rows}')))"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=300, cwd=ROOT
+    )
+    assert result.returncode == 0, result.stderr
+    assert np.array_equal(np.load(out), np.load(expected))
+
+
+@NEEDS_ARTIFACTS
+@pytest.mark.parametrize("path", ARTIFACTS, ids=lambda p: p.stem)
+def test_model_card_describes_the_artifact(path):
+    import hashlib
+
+    card = json.loads(path.with_name(f"{path.stem}.model_card.json").read_text())
+    for key in ("git_commit", "trained_on", "test_metrics", "feature_ranges", "sha256", "versions"):
+        assert key in card, key
+    assert set(card["test_metrics"]) == {"rmse", "mae", "r2"}
+    assert len(card["feature_ranges"]) == 8
+    assert all(lo <= hi for lo, hi in card["feature_ranges"].values())
+    assert (
+        card["sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+    )  # the card matches the file
