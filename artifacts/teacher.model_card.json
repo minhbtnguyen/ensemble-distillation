@@ -1,0 +1,57 @@
+{
+  "model": "Teacher (LightGBM + forest)",
+  "artifact": "teacher.joblib",
+  "sha256": "54b59d6be559bf88b9075678441485cb94e20ec9b8ce83e06c63e6c97be7ac1c",
+  "size_bytes": 438027892,
+  "parameters": 6098767,
+  "arm": "-",
+  "training_rows": 16512,
+  "trained_on": "2026-11-15",
+  "git_commit": "05675b98ee818d70b069793e3aaa0f4ef688e962",
+  "git_dirty": false,
+  "test_metrics": {
+    "rmse": 0.4578478590345278,
+    "mae": 0.2964418720685043,
+    "r2": 0.8400311158552178
+  },
+  "feature_ranges": {
+    "MedInc": [
+      0.4999,
+      15.0001
+    ],
+    "HouseAge": [
+      1.0,
+      52.0
+    ],
+    "AveRooms": [
+      0.8888888888888888,
+      141.9090909090909
+    ],
+    "AveBedrms": [
+      0.3333333333333333,
+      25.636363636363637
+    ],
+    "Population": [
+      3.0,
+      35682.0
+    ],
+    "AveOccup": [
+      0.6923076923076923,
+      1243.3333333333333
+    ],
+    "Latitude": [
+      32.55,
+      41.95
+    ],
+    "Longitude": [
+      -124.35,
+      -114.31
+    ]
+  },
+  "versions": {
+    "python": "3.14.8",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "numpy": "2.5.4"
+  }
+}

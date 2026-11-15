@@ -1,0 +1,57 @@
+{
+  "model": "MLP 2x128",
+  "artifact": "mlp_2x128.joblib",
+  "sha256": "703c2f9e0662a2b544e759b9515f0775aadfe104e11eb02eb27c76da086e9a38",
+  "size_bytes": 438400,
+  "parameters": 17793,
+  "arm": "3 distilled + synthetic",
+  "training_rows": 99072,
+  "trained_on": "2026-11-15",
+  "git_commit": "05675b98ee818d70b069793e3aaa0f4ef688e962",
+  "git_dirty": false,
+  "test_metrics": {
+    "rmse": 0.4829834696347373,
+    "mae": 0.32084827505506885,
+    "r2": 0.821984559161403
+  },
+  "feature_ranges": {
+    "MedInc": [
+      0.4999,
+      15.0001
+    ],
+    "HouseAge": [
+      1.0,
+      52.0
+    ],
+    "AveRooms": [
+      0.8888888888888888,
+      141.9090909090909
+    ],
+    "AveBedrms": [
+      0.3333333333333333,
+      25.636363636363637
+    ],
+    "Population": [
+      3.0,
+      35682.0
+    ],
+    "AveOccup": [
+      0.6923076923076923,
+      1243.3333333333333
+    ],
+    "Latitude": [
+      32.55,
+      41.95
+    ],
+    "Longitude": [
+      -124.35,
+      -114.31
+    ]
+  },
+  "versions": {
+    "python": "3.14.8",
+    "scikit-learn": "1.9.1",
+    "lightgbm": "4.7.0",
+    "numpy": "2.5.4"
+  }
+}
