@@ -43,3 +43,17 @@ def load_split(path=SPLIT_PATH):
         train = split.loc[~split["fold"].isin([TEST_FOLD, k]), "row"].to_numpy()
         folds.append((train, val))
     return test_idx, folds
+
+
+def evaluate_regression(y_true, y_pred):
+    """Return RMSE, MAE and R² as a dict."""
+    y_true = np.asarray(y_true, dtype=float)
+    y_pred = np.asarray(y_pred, dtype=float)
+    err = y_pred - y_true
+    ss_res = np.sum(err**2)
+    ss_tot = np.sum((y_true - y_true.mean()) ** 2)
+    return {
+        "rmse": float(np.sqrt(np.mean(err**2))),
+        "mae": float(np.mean(np.abs(err))),
+        "r2": float(1 - ss_res / ss_tot),
+    }

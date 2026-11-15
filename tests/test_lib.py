@@ -1,6 +1,7 @@
 import numpy as np
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-from src.lib import TEST_FOLD, load_split, make_split, save_split
+from src.lib import TEST_FOLD, evaluate_regression, load_split, make_split, save_split
 
 N, SEED, TEST_SIZE, N_FOLDS = 1000, 42, 0.2, 5
 
@@ -32,3 +33,13 @@ def test_split_structure(tmp_path):
 def test_test_rows_are_labeled():
     split = make_split(N, SEED, TEST_SIZE, N_FOLDS)
     assert (split["fold"] == TEST_FOLD).sum() == int(N * TEST_SIZE)
+
+
+def test_metrics_match_sklearn():
+    rng = np.random.default_rng(0)
+    y_true = rng.normal(2.0, 1.2, size=500)
+    y_pred = y_true + rng.normal(0, 0.5, size=500)
+    m = evaluate_regression(y_true, y_pred)
+    assert abs(m["rmse"] - np.sqrt(mean_squared_error(y_true, y_pred))) < 1e-9
+    assert abs(m["mae"] - mean_absolute_error(y_true, y_pred)) < 1e-9
+    assert abs(m["r2"] - r2_score(y_true, y_pred)) < 1e-9
