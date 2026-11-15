@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import cross_validate
@@ -13,6 +14,7 @@ from src.lib import (
     make_split,
     save_split,
 )
+from src.utils import set_seed
 
 N, SEED, TEST_SIZE, N_FOLDS = 1000, 42, 0.2, 5
 
@@ -78,3 +80,34 @@ def test_trees_go_in_bare():
     tree = DecisionTreeRegressor()
     assert build_pipeline(tree, scale=False) is tree
     assert isinstance(build_pipeline(Ridge()), Pipeline)
+
+
+def _split_and_tiny_training(seed):
+    """Make the split, then train a tiny torch model for a few steps. Returns both results."""
+    set_seed(seed)
+    split = make_split(N, seed, TEST_SIZE, N_FOLDS)
+
+    X = torch.randn(N, 4)
+    y = X @ torch.tensor([1.0, -2.0, 0.5, 3.0]) + 0.1 * torch.randn(N)
+    model = torch.nn.Linear(4, 1)
+    opt = torch.optim.Adam(model.parameters(), lr=0.05)
+    for _ in range(20):
+        opt.zero_grad()
+        loss = torch.nn.functional.mse_loss(model(X).squeeze(1), y)
+        loss.backward()
+        opt.step()
+    return split, model(X).squeeze(1).detach().numpy()
+
+
+def test_same_seed_gives_identical_split_and_predictions():
+    split_a, pred_a = _split_and_tiny_training(SEED)
+    split_b, pred_b = _split_and_tiny_training(SEED)
+    assert split_a.equals(split_b)
+    assert np.array_equal(pred_a, pred_b)
+
+
+def test_different_seed_changes_results():
+    split_a, pred_a = _split_and_tiny_training(SEED)
+    split_b, pred_b = _split_and_tiny_training(SEED + 1)
+    assert not split_a.equals(split_b)
+    assert not np.array_equal(pred_a, pred_b)
