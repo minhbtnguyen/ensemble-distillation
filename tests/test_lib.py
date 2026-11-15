@@ -1,7 +1,18 @@
 import numpy as np
+from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import cross_validate
+from sklearn.pipeline import Pipeline
+from sklearn.tree import DecisionTreeRegressor
 
-from src.lib import TEST_FOLD, evaluate_regression, load_split, make_split, save_split
+from src.lib import (
+    TEST_FOLD,
+    build_pipeline,
+    evaluate_regression,
+    load_split,
+    make_split,
+    save_split,
+)
 
 N, SEED, TEST_SIZE, N_FOLDS = 1000, 42, 0.2, 5
 
@@ -43,3 +54,27 @@ def test_metrics_match_sklearn():
     assert abs(m["rmse"] - np.sqrt(mean_squared_error(y_true, y_pred))) < 1e-9
     assert abs(m["mae"] - mean_absolute_error(y_true, y_pred)) < 1e-9
     assert abs(m["r2"] - r2_score(y_true, y_pred)) < 1e-9
+
+
+def test_pipeline_scaler_is_fit_per_training_fold(tmp_path):
+    rng = np.random.default_rng(0)
+    X = rng.normal(5.0, 3.0, size=(N, 4))
+    y = X @ np.array([1.0, -2.0, 0.5, 3.0]) + rng.normal(0, 0.1, size=N)
+
+    path = tmp_path / "split.csv"
+    save_split(make_split(N, SEED, TEST_SIZE, N_FOLDS), path)
+    _, folds = load_split(path)
+
+    res = cross_validate(build_pipeline(Ridge()), X, y, cv=folds, return_estimator=True)
+    means = []
+    for (train, _val), est in zip(folds, res["estimator"], strict=True):
+        scaler_mean = est.named_steps["scale"].mean_
+        assert np.allclose(scaler_mean, X[train].mean(axis=0))  # fit on this fold's training rows
+        means.append(scaler_mean)
+    assert not np.allclose(means[0], means[1])  # and refit for every fold
+
+
+def test_trees_go_in_bare():
+    tree = DecisionTreeRegressor()
+    assert build_pipeline(tree, scale=False) is tree
+    assert isinstance(build_pipeline(Ridge()), Pipeline)

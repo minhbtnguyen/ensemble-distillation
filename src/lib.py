@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import KFold, train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 ROOT = Path(__file__).resolve().parent.parent
 SPLIT_PATH = ROOT / "data" / "split.csv"
@@ -57,3 +59,13 @@ def evaluate_regression(y_true, y_pred):
         "mae": float(np.mean(np.abs(err))),
         "r2": float(1 - ss_res / ss_tot),
     }
+
+
+def build_pipeline(model, scale=True):
+    """Wrap a model with a StandardScaler, or return it bare for tree models (scale=False).
+
+    Inside cross-validation the scaler is refit on each training fold only.
+    """
+    if not scale:
+        return model
+    return Pipeline([("scale", StandardScaler()), ("model", model)])
