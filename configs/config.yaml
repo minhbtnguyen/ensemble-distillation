@@ -23,3 +23,4 @@ distill:
     learning_rate_init: 0.002  # near the tuned MLP's learning rate
     alpha: 0.0001  # L2 penalty
     max_iter: 200
+  n_seeds: 5  # seeds are seed, seed + 1, ... for the students and the synthetic rows
