@@ -27,6 +27,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - The three training arms (true labels, out-of-fold teacher labels, teacher labels plus synthetic rows) for all three students, run once on one seed in `notebooks/distillation.ipynb`. MLPs keep 40% and 59% of the teacher's gain in the synthetic-rows arm, the tree about 1%.
 - `src/distill.py` (`python -m src.distill`): 3 students x 3 arms x 5 seeds = 45 fits, with `tests/test_distill.py`. Writes `results/distill_runs.csv` (test RMSE, fidelity, training seconds per fit), `results/distill_sq_errors.npy` (squared error of every test row per fit, same order as the CSV) and `results/distill_teacher.json`. Re-running a seed gives identical results.
 - `paired_bootstrap_rmse` in `src/lib.py` (with a test) and `notebooks/distillation_results.ipynb`: mean ± std per student and arm, and the share of the teacher's gain kept with a paired-bootstrap 95% interval (`results/distill_summary.csv`). With teacher labels plus synthetic rows the 128-wide MLP keeps 62% (56% to 68%), the 32-wide MLP 35% (29% to 40%) and the tree 0.3%. Teacher labels alone add nothing measurable.
+- Cost accounting in `notebooks/distillation_results.ipynb` (`results/cost_teacher.csv`, `cost_models.csv`, `cost_all_in.csv`), measured on an Apple M5 Pro: the teacher costs 619 s once (555 s of it tuning), the synthetic-rows students train in 6 to 15 s, and a student predicts 125 to 400 times faster per row than the teacher (batch).
 
 ### Changed
 - `DESIGN.md` repo skeleton and file paths now match this layout.

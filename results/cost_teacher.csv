@@ -1,0 +1,6 @@
+what,seconds
+Tune LightGBM (20 trials),555.0516637498513
+Fit the teacher on the full training portion,11.21276616700925
+Out-of-fold labels (5 teacher fits),50.35112358420156
+"Label 82,560 synthetic rows",2.6598766669631004
+"Total, one time",619.2754301680252
