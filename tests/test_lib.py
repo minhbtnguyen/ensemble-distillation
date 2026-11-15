@@ -20,6 +20,7 @@ from src.lib import (
     make_students,
     make_synthetic_rows,
     out_of_fold_predictions,
+    paired_bootstrap_rmse,
     save_split,
 )
 from src.utils import set_seed
@@ -221,3 +222,18 @@ def test_students_fit_and_predict_in_the_target_scale():
             name
         )  # predictions come back in the target's units
         assert np.sqrt(np.mean((pred - y) ** 2)) < y.std(), name  # better than predicting the mean
+
+
+def test_paired_bootstrap_uses_the_same_draws_and_centers_on_the_full_sample_rmse():
+    rng = np.random.default_rng(6)
+    sq_a = rng.exponential(1.0, size=(3, 500))  # 3 seeds, 500 test rows
+    sq_teacher = rng.exponential(0.5, size=500)
+    out = paired_bootstrap_rmse({"a": sq_a, "a_again": sq_a.copy()}, sq_teacher, n_boot=300, seed=1)
+
+    assert set(out) == {"a", "a_again", "teacher"}
+    assert all(len(v) == 300 for v in out.values())
+    assert np.array_equal(out["a"], out["a_again"])  # identical models get identical draws
+    full_sample = np.sqrt(sq_a.mean(axis=1)).mean()
+    assert abs(out["a"].mean() - full_sample) < 0.02
+    again = paired_bootstrap_rmse({"a": sq_a}, sq_teacher, n_boot=300, seed=1)
+    assert np.array_equal(again["a"], out["a"])  # deterministic for a seed

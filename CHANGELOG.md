@@ -26,6 +26,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `make_students` in `src/lib.py` (with a test) and the three students in `notebooks/distillation.ipynb`: MLPs with 2 hidden layers of 32 and 128, and a depth-6 tree, each one object with `fit` and `predict`. Student settings are in `configs/config.yaml`.
 - The three training arms (true labels, out-of-fold teacher labels, teacher labels plus synthetic rows) for all three students, run once on one seed in `notebooks/distillation.ipynb`. MLPs keep 40% and 59% of the teacher's gain in the synthetic-rows arm, the tree about 1%.
 - `src/distill.py` (`python -m src.distill`): 3 students x 3 arms x 5 seeds = 45 fits, with `tests/test_distill.py`. Writes `results/distill_runs.csv` (test RMSE, fidelity, training seconds per fit), `results/distill_sq_errors.npy` (squared error of every test row per fit, same order as the CSV) and `results/distill_teacher.json`. Re-running a seed gives identical results.
+- `paired_bootstrap_rmse` in `src/lib.py` (with a test) and `notebooks/distillation_results.ipynb`: mean ± std per student and arm, and the share of the teacher's gain kept with a paired-bootstrap 95% interval (`results/distill_summary.csv`). With teacher labels plus synthetic rows the 128-wide MLP keeps 62% (56% to 68%), the 32-wide MLP 35% (29% to 40%) and the tree 0.3%. Teacher labels alone add nothing measurable.
 
 ### Changed
 - `DESIGN.md` repo skeleton and file paths now match this layout.

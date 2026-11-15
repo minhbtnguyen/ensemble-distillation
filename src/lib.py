@@ -176,3 +176,23 @@ def make_students(distill_cfg, seed):
     depth = distill_cfg["student_tree_depth"]
     students[f"Tree (depth {depth})"] = DecisionTreeRegressor(max_depth=depth, random_state=seed)
     return students
+
+
+def paired_bootstrap_rmse(sq_errors, sq_teacher, n_boot=1000, seed=0):
+    """Bootstrap the test rows and recompute every model's RMSE on each draw.
+
+    sq_errors maps a name to an array of squared test-row errors, shape (n_seeds, n_test).
+    sq_teacher is the teacher's squared error per test row, shape (n_test,). Each draw resamples
+    the test rows with replacement, and the SAME draw is used for every model, so comparisons
+    between them are paired. A group's RMSE on a draw is the mean over its seeds of the per-seed
+    RMSE. Returns {name: array of n_boot RMSEs}, with the teacher under "teacher".
+    """
+    rng = np.random.default_rng(seed)
+    n_test = len(sq_teacher)
+    draws = rng.integers(0, n_test, size=(n_boot, n_test))
+    out = {
+        name: np.array([np.sqrt(sq[:, idx].mean(axis=1)).mean() for idx in draws])
+        for name, sq in sq_errors.items()
+    }
+    out["teacher"] = np.array([np.sqrt(sq_teacher[idx].mean()) for idx in draws])
+    return out
