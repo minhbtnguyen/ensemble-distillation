@@ -5,7 +5,9 @@ import pandas as pd
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import KFold, train_test_split
 
-SPLIT_PATH = Path(__file__).resolve().parent.parent / "data" / "split.csv"
+ROOT = Path(__file__).resolve().parent.parent
+SPLIT_PATH = ROOT / "data" / "split.csv"
+RESULTS_DIR = ROOT / "results"
 TEST_FOLD = -1  # fold label for rows in the frozen test set
 
 
