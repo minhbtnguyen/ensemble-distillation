@@ -3,10 +3,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, RegressorMixin, clone
+from sklearn.compose import TransformedTargetRegressor
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import KFold, train_test_split
+from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeRegressor
 
 ROOT = Path(__file__).resolve().parent.parent
 SPLIT_PATH = ROOT / "data" / "split.csv"
@@ -145,3 +148,31 @@ def make_synthetic_rows(X, n_rows, noise_frac, seed):
     parents = X[rng.integers(0, len(X), size=n_rows)]
     noise = rng.normal(size=parents.shape) * X.std(axis=0) * np.asarray(noise_frac)
     return np.clip(parents + noise, X.min(axis=0), X.max(axis=0))
+
+
+def make_students(distill_cfg, seed):
+    """Build the three students as {name: estimator}. Each is one object with fit and predict.
+
+    The MLPs standardize the features (inside a Pipeline) and the target (so the net trains on a
+    scale near 1 and predicts back in $100k). The tree needs neither.
+    """
+    mlp_cfg = distill_cfg["student_mlp"]
+
+    def mlp(width):
+        net = MLPRegressor(
+            hidden_layer_sizes=(width, width),
+            learning_rate_init=mlp_cfg["learning_rate_init"],
+            alpha=mlp_cfg["alpha"],
+            max_iter=mlp_cfg["max_iter"],
+            early_stopping=True,
+            n_iter_no_change=10,
+            random_state=seed,
+        )
+        return TransformedTargetRegressor(
+            regressor=build_pipeline(net), transformer=StandardScaler()
+        )
+
+    students = {f"MLP 2x{w}": mlp(w) for w in distill_cfg["student_widths"]}
+    depth = distill_cfg["student_tree_depth"]
+    students[f"Tree (depth {depth})"] = DecisionTreeRegressor(max_depth=depth, random_state=seed)
+    return students

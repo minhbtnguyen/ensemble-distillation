@@ -17,6 +17,7 @@ from src.lib import (
     evaluate_regression,
     load_split,
     make_split,
+    make_students,
     make_synthetic_rows,
     out_of_fold_predictions,
     save_split,
@@ -199,3 +200,24 @@ def test_synthetic_noise_size_follows_noise_frac():
     # first column has no noise, so its spread matches the data; second has jitter added
     assert abs(small[:, 0].std() - X[:, 0].std()) < 0.05
     assert small[:, 1].std() > X[:, 1].std()
+
+
+def test_students_fit_and_predict_in_the_target_scale():
+    cfg = {
+        "student_widths": [8, 16],
+        "student_tree_depth": 4,
+        "student_mlp": {"learning_rate_init": 0.01, "alpha": 0.0001, "max_iter": 200},
+    }
+    rng = np.random.default_rng(5)
+    X = rng.normal(5.0, 3.0, size=(400, 3))
+    y = 100.0 + X @ np.array([1.0, -2.0, 0.5])  # a target far from zero and not unit scale
+
+    students = make_students(cfg, seed=0)
+    assert list(students) == ["MLP 2x8", "MLP 2x16", "Tree (depth 4)"]
+    for name, student in students.items():
+        pred = student.fit(X, y).predict(X)  # one fit and one predict call
+        assert pred.shape == y.shape, name
+        assert abs(pred.mean() - y.mean()) < 5.0, (
+            name
+        )  # predictions come back in the target's units
+        assert np.sqrt(np.mean((pred - y) ** 2)) < y.std(), name  # better than predicting the mean

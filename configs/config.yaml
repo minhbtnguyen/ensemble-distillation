@@ -16,3 +16,10 @@ distill:
   synthetic_ratio: 5
   noise_frac: 0.05
   latlon_noise_frac: 0.02
+  # Step 5: the three students. Two small MLPs (2 hidden layers of each width) and one tree.
+  student_widths: [32, 128]
+  student_tree_depth: 6
+  student_mlp:
+    learning_rate_init: 0.002  # near the tuned MLP's learning rate
+    alpha: 0.0001  # L2 penalty
+    max_iter: 200
