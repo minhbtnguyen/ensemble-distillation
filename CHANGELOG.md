@@ -15,6 +15,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `notebooks/setup_baselines.ipynb`: EDA on the training portion, `results/fig1_eda.png`, and the baselines table in `results/baselines.csv` (mean, ridge, depth-6 tree).
 - `notebooks/error_correlation.ipynb`: voters simulation (21 independent voters reach 82.7%, 21 identical copies stay at 60.1%) and error correlation of the trees in one random forest (correlation 0.39, single-tree RMSE 0.806, forest RMSE 0.508), a `max_features` sweep with a `bootstrap=False` extreme case (`results/error_correlation_sweep.csv`), and `results/fig2_error_correlation.png`.
 - Search budget in `configs/config.yaml` (`tune.n_trials: 20`, `tune.time_cap_seconds: 900`), the same for LightGBM and the MLP, set before any search is run.
+- `notebooks/lightgbm_vs_mlp.ipynb`: LightGBM random search over seven settings, scored by the shared 5-fold CV with early stopping on an inner slice of each training fold. A 3-trial run logs one row per trial (parameters, CV mean and std, trial seconds, cumulative seconds).
 
 ### Changed
 - `DESIGN.md` repo skeleton and file paths now match this layout.
