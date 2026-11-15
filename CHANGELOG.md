@@ -24,6 +24,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `out_of_fold_predictions` in `src/lib.py` (with a test) and out-of-fold teacher labels for all 16,512 training rows in `data/teacher_oof.csv`. Teacher RMSE against the true labels is 0.464 out-of-fold but 0.239 in-sample.
 - `make_synthetic_rows` in `src/lib.py` (with tests) and 82,560 synthetic rows (5x the training rows) labeled by the teacher in `notebooks/distillation.ipynb`, with a `distill` section in `configs/config.yaml`. Latitude and longitude get 2% jitter and the other features 5%. A nearest-real-row check shows the synthetic rows are no more spread out than the real ones.
 - `make_students` in `src/lib.py` (with a test) and the three students in `notebooks/distillation.ipynb`: MLPs with 2 hidden layers of 32 and 128, and a depth-6 tree, each one object with `fit` and `predict`. Student settings are in `configs/config.yaml`.
+- The three training arms (true labels, out-of-fold teacher labels, teacher labels plus synthetic rows) for all three students, run once on one seed in `notebooks/distillation.ipynb`. MLPs keep 40% and 59% of the teacher's gain in the synthetic-rows arm, the tree about 1%.
 
 ### Changed
 - `DESIGN.md` repo skeleton and file paths now match this layout.
