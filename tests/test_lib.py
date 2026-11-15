@@ -17,6 +17,7 @@ from src.lib import (
     evaluate_regression,
     load_split,
     make_split,
+    make_synthetic_rows,
     out_of_fold_predictions,
     save_split,
 )
@@ -176,3 +177,25 @@ def test_out_of_fold_predictions_cover_training_rows_only_and_never_see_their_ro
     train_idx, val_idx = folds[0]  # the first fold's rows come from a model that excluded them
     expected = Ridge().fit(X[train_idx], y[train_idx]).predict(X[val_idx])
     assert np.allclose(oof[val_idx], expected)
+
+
+def test_synthetic_rows_are_deterministic_in_range_and_jittered():
+    rng = np.random.default_rng(3)
+    X = rng.normal(size=(300, 4)) * [1.0, 5.0, 0.1, 20.0]
+    a = make_synthetic_rows(X, 1500, noise_frac=0.05, seed=9)
+    b = make_synthetic_rows(X, 1500, noise_frac=0.05, seed=9)
+    assert a.shape == (1500, 4)
+    assert np.array_equal(a, b)
+    assert (a >= X.min(axis=0)).all() and (a <= X.max(axis=0)).all()
+    real_rows = {tuple(row) for row in X}
+    assert not any(tuple(row) in real_rows for row in a)  # jittered copies, not real rows
+    assert not np.array_equal(a, make_synthetic_rows(X, 1500, noise_frac=0.05, seed=10))
+
+
+def test_synthetic_noise_size_follows_noise_frac():
+    rng = np.random.default_rng(4)
+    X = rng.normal(size=(2000, 2)) * [1.0, 10.0]
+    small = make_synthetic_rows(X, 20000, noise_frac=[0.0, 0.05], seed=0)
+    # first column has no noise, so its spread matches the data; second has jitter added
+    assert abs(small[:, 0].std() - X[:, 0].std()) < 0.05
+    assert small[:, 1].std() > X[:, 1].std()

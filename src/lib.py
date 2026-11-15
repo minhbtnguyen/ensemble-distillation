@@ -131,3 +131,17 @@ def out_of_fold_predictions(model, X, y, folds):
     for train_idx, val_idx in folds:
         oof[val_idx] = clone(model).fit(X[train_idx], y[train_idx]).predict(X[val_idx])
     return oof
+
+
+def make_synthetic_rows(X, n_rows, noise_frac, seed):
+    """Make extra feature rows: resample real rows and jitter every feature a little.
+
+    noise_frac is the jitter size as a fraction of each feature's standard deviation (one number,
+    or one per column). Results are clipped to each feature's real min and max. The rows have no
+    labels: label them with the teacher.
+    """
+    rng = np.random.default_rng(seed)
+    X = np.asarray(X, dtype=float)
+    parents = X[rng.integers(0, len(X), size=n_rows)]
+    noise = rng.normal(size=parents.shape) * X.std(axis=0) * np.asarray(noise_frac)
+    return np.clip(parents + noise, X.min(axis=0), X.max(axis=0))

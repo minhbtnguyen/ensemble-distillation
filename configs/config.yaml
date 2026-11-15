@@ -8,3 +8,11 @@ data:
 tune:
   n_trials: 20
   time_cap_seconds: 900
+
+# Step 4: synthetic rows for the distillation arm that adds extra teacher-labeled data.
+# Jitter is a fraction of each feature's standard deviation. Latitude and longitude get less,
+# so rows stay on the map (checked in the distillation notebook).
+distill:
+  synthetic_ratio: 5
+  noise_frac: 0.05
+  latlon_noise_frac: 0.02

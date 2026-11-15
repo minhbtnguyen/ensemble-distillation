@@ -22,6 +22,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `notebooks/distillation.ipynb`: expected share of the teacher's gain kept by each student, written before running any distillation.
 - `AverageEnsemble` and `EarlyStoppingLGBM` in `src/lib.py` (with tests, including a joblib round trip), and the teacher in `notebooks/distillation.ipynb`: the average of the tuned LightGBM and a 300-tree random forest. Test RMSE is 0.458, lower than the forest (0.494) but not LightGBM alone (0.441), because their errors are 0.92 correlated.
 - `out_of_fold_predictions` in `src/lib.py` (with a test) and out-of-fold teacher labels for all 16,512 training rows in `data/teacher_oof.csv`. Teacher RMSE against the true labels is 0.464 out-of-fold but 0.239 in-sample.
+- `make_synthetic_rows` in `src/lib.py` (with tests) and 82,560 synthetic rows (5x the training rows) labeled by the teacher in `notebooks/distillation.ipynb`, with a `distill` section in `configs/config.yaml`. Latitude and longitude get 2% jitter and the other features 5%. A nearest-real-row check shows the synthetic rows are no more spread out than the real ones.
 
 ### Changed
 - `DESIGN.md` repo skeleton and file paths now match this layout.
