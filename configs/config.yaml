@@ -2,3 +2,9 @@ seed: 42
 data:
   test_size: 0.2
   n_folds: 5
+
+# Step 3 budget, set before running anything. Same for LightGBM and the MLP.
+# A search stops at n_trials or time_cap_seconds, whichever comes first.
+tune:
+  n_trials: 20
+  time_cap_seconds: 900
