@@ -13,7 +13,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `build_pipeline` (scaler plus model, or a bare tree) with a test that the scaler is refit on each training fold.
 - Determinism test: same seed gives an identical split and identical tiny-training predictions.
 - `notebooks/setup_baselines.ipynb`: EDA on the training portion, `results/fig1_eda.png`, and the baselines table in `results/baselines.csv` (mean, ridge, depth-6 tree).
-- `notebooks/error_correlation.ipynb`: voters simulation (21 independent voters reach 82.7%, 21 identical copies stay at 60.1%) and error correlation of the trees in one random forest (correlation 0.39, single-tree RMSE 0.806, forest RMSE 0.508).
+- `notebooks/error_correlation.ipynb`: voters simulation (21 independent voters reach 82.7%, 21 identical copies stay at 60.1%) and error correlation of the trees in one random forest (correlation 0.39, single-tree RMSE 0.806, forest RMSE 0.508), a `max_features` sweep with a `bootstrap=False` extreme case (`results/error_correlation_sweep.csv`), and `results/fig2_error_correlation.png`.
 - `DECISIONS.md`.
 
 ### Changed
