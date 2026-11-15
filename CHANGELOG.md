@@ -18,6 +18,7 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `notebooks/lightgbm_vs_mlp.ipynb`: LightGBM random search over seven settings, scored by the shared 5-fold CV with early stopping on an inner slice of each training fold. A 3-trial run logs one row per trial (parameters, CV mean and std, trial seconds, cumulative seconds).
 - Same notebook: PyTorch MLP random search (width, depth, learning rate, weight decay, dropout) with standardized features and target, Adam, MSE and early stopping. One shared `run_search` loop writes the same log columns for both models, and RMSE is reported in $100k, directly comparable with LightGBM.
 - `src/tune.py` (`python -m src.tune --model lgbm` or `--model mlp`): both searches as a CLI that stops at `n_trials` or the time cap, with `tests/test_tune.py`. Real 20-trial runs wrote `results/trials_{lgbm,mlp}.csv` and `results/best_{lgbm,mlp}.json` (best CV RMSE 0.4492 for LightGBM, 0.5184 for the MLP).
+- `notebooks/lightgbm_vs_mlp.ipynb` now loads the search results: budget curves in `results/fig3_equal_budget.png` and a report in `results/tuning_summary.csv` (best settings refit on the full training portion, test set scored once: LightGBM RMSE 0.441, MLP 0.530, both under 20 trials). Search code moved out of the notebook into `src/tune.py`, with a `fit_predict_lgbm` helper.
 
 ### Changed
 - `DESIGN.md` repo skeleton and file paths now match this layout.

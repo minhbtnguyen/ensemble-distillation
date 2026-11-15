@@ -67,22 +67,27 @@ def sample_lgbm_params(rng):
     }
 
 
-def cv_rmse_lgbm(params, X, y, folds, seed):
-    """5-fold CV RMSE for one setting: (mean, std) over the folds."""
+def fit_predict_lgbm(params, X, y, fit_idx, stop_idx, pred_idx, seed):
+    """Train on fit_idx, stop early on stop_idx, return predictions for pred_idx."""
     import lightgbm as lgb  # imported here so the MLP process never loads it
 
+    model = lgb.LGBMRegressor(**params, subsample_freq=1, random_state=seed, verbose=-1)
+    model.fit(
+        X[fit_idx],
+        y[fit_idx],
+        eval_X=X[stop_idx],
+        eval_y=y[stop_idx],
+        callbacks=[lgb.early_stopping(50, verbose=False)],
+    )
+    return model.predict(X[pred_idx])  # uses the best round found by early stopping
+
+
+def cv_rmse_lgbm(params, X, y, folds, seed):
+    """5-fold CV RMSE for one setting: (mean, std) over the folds."""
     scores = []
     for train_idx, val_idx in folds:
         fit_idx, stop_idx = train_test_split(train_idx, test_size=0.1, random_state=seed)
-        model = lgb.LGBMRegressor(**params, subsample_freq=1, random_state=seed, verbose=-1)
-        model.fit(
-            X[fit_idx],
-            y[fit_idx],
-            eval_X=X[stop_idx],
-            eval_y=y[stop_idx],
-            callbacks=[lgb.early_stopping(50, verbose=False)],
-        )
-        pred = model.predict(X[val_idx])  # uses the best round found by early stopping
+        pred = fit_predict_lgbm(params, X, y, fit_idx, stop_idx, val_idx, seed)
         scores.append(evaluate_regression(y[val_idx], pred)["rmse"])
     return float(np.mean(scores)), float(np.std(scores, ddof=1))
 
