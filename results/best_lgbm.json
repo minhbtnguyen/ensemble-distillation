@@ -1,0 +1,14 @@
+{
+  "trial": 12,
+  "cv_rmse_mean": 0.44924842537329673,
+  "cv_rmse_std": 0.01331639386252361,
+  "params": {
+    "learning_rate": 0.053400495878730164,
+    "num_leaves": 104,
+    "n_estimators": 214,
+    "min_child_samples": 34,
+    "subsample": 0.7183586946161812,
+    "colsample_bytree": 0.6072923364097647,
+    "reg_lambda": 0.043064020633992874
+  }
+}
