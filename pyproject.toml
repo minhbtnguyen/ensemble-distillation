@@ -1,0 +1,24 @@
+[project]
+name = "ensemble-distillation"
+version = "0.1.0"
+description = "Distilling tuned tree ensembles into small students"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy",
+  "pandas",
+  "scipy",
+  "scikit-learn",
+  "lightgbm",
+  "torch",
+  "matplotlib",
+  "joblib",
+  "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "jupyter", "ipykernel"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
