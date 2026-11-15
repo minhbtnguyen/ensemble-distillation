@@ -28,8 +28,10 @@ All notable changes to this project. Format follows [Keep a Changelog](https://k
 - `src/distill.py` (`python -m src.distill`): 3 students x 3 arms x 5 seeds = 45 fits, with `tests/test_distill.py`. Writes `results/distill_runs.csv` (test RMSE, fidelity, training seconds per fit), `results/distill_sq_errors.npy` (squared error of every test row per fit, same order as the CSV) and `results/distill_teacher.json`. Re-running a seed gives identical results.
 - `paired_bootstrap_rmse` in `src/lib.py` (with a test) and `notebooks/distillation_results.ipynb`: mean ± std per student and arm, and the share of the teacher's gain kept with a paired-bootstrap 95% interval (`results/distill_summary.csv`). With teacher labels plus synthetic rows the 128-wide MLP keeps 62% (56% to 68%), the 32-wide MLP 35% (29% to 40%) and the tree 0.3%. Teacher labels alone add nothing measurable.
 - Cost accounting in `notebooks/distillation_results.ipynb` (`results/cost_teacher.csv`, `cost_models.csv`, `cost_all_in.csv`), measured on an Apple M5 Pro: the teacher costs 619 s once (555 s of it tuning), the synthetic-rows students train in 6 to 15 s, and a student predicts 125 to 400 times faster per row than the teacher (batch).
+- Size, speed and memory in `notebooks/size_speed_memory.ipynb` (`results/size_speed_memory.csv`), one row per model: the teacher and each student's best arm, saved by the new `src/build_artifacts.py` as `joblib` files in `artifacts/` (git-ignored). `src/bench.py` (parameter counts, thread pinning, single-row latency, a numpy-only MLP forward pass) and `src/measure_memory.py` (fresh-process memory), with tests. On an Apple M5 Pro the teacher is 418 MB and takes 5.5 ms per row; the 128-wide MLP is 0.42 MB and takes 124 microseconds (5 microseconds for the model alone).
 
 ### Changed
+- `src/distill.py` now builds the three arms with a shared `make_arms` (results unchanged: seed 42 reproduces exactly).
 - `DESIGN.md` repo skeleton and file paths now match this layout.
 
 ### Removed

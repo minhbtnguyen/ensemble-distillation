@@ -65,6 +65,27 @@ def fit_and_score(student, X_train, y_train, X_test, y_test, teacher_test_pred):
     return scores, (pred - y_test) ** 2
 
 
+def make_arms(X_dev, y_dev, oof_dev, teacher, dcfg, feature_names, seed):
+    """The three training sets: {arm name: (features, labels)}.
+
+    Arm 3 adds synthetic rows (resampled, jittered training rows) labeled by the teacher.
+    """
+    noise_frac = np.array(
+        [
+            dcfg["latlon_noise_frac"] if c in ("Latitude", "Longitude") else dcfg["noise_frac"]
+            for c in feature_names
+        ]
+    )
+    n_synth = dcfg["synthetic_ratio"] * len(X_dev)
+    X_synth = make_synthetic_rows(X_dev, n_synth, noise_frac, seed)
+    y_synth = teacher.predict(X_synth)
+    return {
+        ARMS[0]: (X_dev, y_dev),
+        ARMS[1]: (X_dev, oof_dev),
+        ARMS[2]: (np.vstack([X_dev, X_synth]), np.concatenate([oof_dev, y_synth])),
+    }
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--n-seeds", type=int, help="override distill.n_seeds (for a quick check)")
@@ -91,23 +112,10 @@ def main(argv=None):
     print(f"teacher test RMSE {teacher_test_rmse:.4f}", flush=True)
 
     feature_names = list(load_data()[0].columns)
-    noise_frac = np.array(
-        [
-            dcfg["latlon_noise_frac"] if c in ("Latitude", "Longitude") else dcfg["noise_frac"]
-            for c in feature_names
-        ]
-    )
-    n_synth = dcfg["synthetic_ratio"] * len(X_dev)
 
     rows, sq_errors = [], []
     for seed in seeds:
-        X_synth = make_synthetic_rows(X_dev, n_synth, noise_frac, seed)
-        y_synth = teacher.predict(X_synth)
-        arms = {
-            ARMS[0]: (X_dev, y_dev),
-            ARMS[1]: (X_dev, oof_dev),
-            ARMS[2]: (np.vstack([X_dev, X_synth]), np.concatenate([oof_dev, y_synth])),
-        }
+        arms = make_arms(X_dev, y_dev, oof_dev, teacher, dcfg, feature_names, seed)
         for student_name, student in make_students(dcfg, seed).items():
             for arm_name, (X_train, y_train) in arms.items():
                 scores, sq = fit_and_score(
