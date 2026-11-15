@@ -119,3 +119,15 @@ class AverageEnsemble(BaseEstimator, RegressorMixin):
 
     def predict(self, X):
         return np.mean([est.predict(X) for est in self.fitted_], axis=0)
+
+
+def out_of_fold_predictions(model, X, y, folds):
+    """Predict every training row with a model that never saw it.
+
+    For each fold, fit a clone of `model` on the other folds and predict the held-out fold.
+    Returns an array as long as X. Rows in no fold (the test rows) stay NaN.
+    """
+    oof = np.full(len(y), np.nan)
+    for train_idx, val_idx in folds:
+        oof[val_idx] = clone(model).fit(X[train_idx], y[train_idx]).predict(X[val_idx])
+    return oof

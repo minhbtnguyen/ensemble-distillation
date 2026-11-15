@@ -17,6 +17,7 @@ from src.lib import (
     evaluate_regression,
     load_split,
     make_split,
+    out_of_fold_predictions,
     save_split,
 )
 from src.utils import set_seed
@@ -158,3 +159,20 @@ assert np.sqrt(np.mean((m.predict(X) - y) ** 2)) < 0.5
         [sys.executable, "-c", code], capture_output=True, text=True, timeout=120
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_out_of_fold_predictions_cover_training_rows_only_and_never_see_their_row(tmp_path):
+    rng = np.random.default_rng(2)
+    X = rng.normal(size=(N, 3))
+    y = X @ np.array([1.0, 2.0, -1.0]) + rng.normal(0, 0.5, size=N)
+    path = tmp_path / "split.csv"
+    save_split(make_split(N, SEED, TEST_SIZE, N_FOLDS), path)
+    test_idx, folds = load_split(path)
+
+    oof = out_of_fold_predictions(Ridge(), X, y, folds)
+    assert np.isnan(oof[test_idx]).all()  # test rows get no label
+    assert not np.isnan(np.delete(oof, test_idx)).any()  # every training row has one
+
+    train_idx, val_idx = folds[0]  # the first fold's rows come from a model that excluded them
+    expected = Ridge().fit(X[train_idx], y[train_idx]).predict(X[val_idx])
+    assert np.allclose(oof[val_idx], expected)
